@@ -36,6 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedTheme === "dark") {
       document.body.classList.add("dark-mode");
       updateDarkModeUI(true);
+    } else {
+      updateDarkModeUI(false);
     }
   }
 
