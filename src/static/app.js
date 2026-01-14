@@ -49,9 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isDarkMode) {
       themeIcon.textContent = "☀️";
       themeLabel.textContent = "Light";
+      darkModeToggle.setAttribute("aria-pressed", "true");
     } else {
       themeIcon.textContent = "🌙";
       themeLabel.textContent = "Dark";
+      darkModeToggle.setAttribute("aria-pressed", "false");
     }
   }
 
