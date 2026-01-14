@@ -26,6 +26,46 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
 
+  // Dark mode elements
+  const darkModeToggle = document.getElementById("dark-mode-toggle");
+  const themeIcon = darkModeToggle.querySelector(".theme-icon");
+  const themeLabel = document.getElementById("theme-label");
+
+  // Dark mode functionality
+  function initializeDarkMode() {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark-mode");
+      updateDarkModeUI(true);
+    } else {
+      updateDarkModeUI(false);
+    }
+  }
+
+  function toggleDarkMode() {
+    const isDarkMode = document.body.classList.toggle("dark-mode");
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    updateDarkModeUI(isDarkMode);
+  }
+
+  function updateDarkModeUI(isDarkMode) {
+    if (isDarkMode) {
+      themeIcon.textContent = "☀️";
+      themeLabel.textContent = "Light";
+      darkModeToggle.setAttribute("aria-pressed", "true");
+    } else {
+      themeIcon.textContent = "🌙";
+      themeLabel.textContent = "Dark";
+      darkModeToggle.setAttribute("aria-pressed", "false");
+    }
+  }
+
+  // Event listener for dark mode toggle
+  darkModeToggle.addEventListener("click", toggleDarkMode);
+
+  // Initialize dark mode on page load
+  initializeDarkMode();
+
   // Activity categories with corresponding colors
   const activityTypes = {
     sports: { label: "Sports", color: "#e8f5e9", textColor: "#2e7d32" },
@@ -555,6 +595,24 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    // Create share buttons
+    const shareButtonsHtml = `
+      <div class="share-buttons">
+        <button class="share-btn share-facebook" data-activity="${name}" title="Share on Facebook" aria-label="Share ${name} on Facebook">
+          <span class="share-icon">📘</span>
+        </button>
+        <button class="share-btn share-twitter" data-activity="${name}" title="Share on Twitter" aria-label="Share ${name} on Twitter">
+          <span class="share-icon">🐦</span>
+        </button>
+        <button class="share-btn share-email" data-activity="${name}" title="Share via Email" aria-label="Share ${name} via Email">
+          <span class="share-icon">✉️</span>
+        </button>
+        <button class="share-btn share-copy" data-activity="${name}" title="Copy Link" aria-label="Copy ${name} details to clipboard">
+          <span class="share-icon">🔗</span>
+        </button>
+      </div>
+    `;
+
     activityCard.innerHTML = `
       ${tagHtml}
       <h4>${name}</h4>
@@ -565,6 +623,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
+      ${shareButtonsHtml}
       <div class="participants-list">
         <h5>Current Participants:</h5>
         <ul>
@@ -623,6 +682,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-btn");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const activityName = button.dataset.activity;
+        const activityDetails = allActivities[activityName];
+        
+        if (button.classList.contains("share-facebook")) {
+          shareOnFacebook(activityName, activityDetails);
+        } else if (button.classList.contains("share-twitter")) {
+          shareOnTwitter(activityName, activityDetails);
+        } else if (button.classList.contains("share-email")) {
+          shareViaEmail(activityName, activityDetails);
+        } else if (button.classList.contains("share-copy")) {
+          copyActivityLink(activityName, activityDetails);
+        }
+      });
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -898,6 +977,81 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Social sharing functions
+  function getActivityShareUrl(activityName) {
+    // Create a URL that points to the current page
+    // In a real app, this could be a deep link to the specific activity
+    const baseUrl = window.location.origin + window.location.pathname;
+    return baseUrl;
+  }
+
+  function getActivityShareText(activityName, details) {
+    const formattedSchedule = formatSchedule(details);
+    return `Check out this activity at Mergington High School: ${activityName}! ${details.description} Schedule: ${formattedSchedule}`;
+  }
+
+  function shareOnFacebook(activityName, details) {
+    const url = getActivityShareUrl(activityName);
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    showMessage('Opening Facebook share dialog...', 'info');
+  }
+
+  function shareOnTwitter(activityName, details) {
+    const text = getActivityShareText(activityName, details);
+    const url = getActivityShareUrl(activityName);
+    const shareUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    showMessage('Opening Twitter share dialog...', 'info');
+  }
+
+  function shareViaEmail(activityName, details) {
+    const subject = `Activity at Mergington High School: ${activityName}`;
+    const body = getActivityShareText(activityName, details) + '\n\nLearn more at: ' + getActivityShareUrl(activityName);
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
+    showMessage('Opening email client...', 'info');
+  }
+
+  function copyActivityLink(activityName, details) {
+    const url = getActivityShareUrl(activityName);
+    const text = getActivityShareText(activityName, details) + '\n' + url;
+    
+    // Use the Clipboard API if available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          showMessage('Activity details copied to clipboard!', 'success');
+        })
+        .catch(() => {
+          // Fallback to the old method
+          fallbackCopyText(text);
+        });
+    } else {
+      // Fallback for older browsers
+      fallbackCopyText(text);
+    }
+  }
+
+  function fallbackCopyText(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+      // Using deprecated execCommand as fallback for older browsers
+      document.execCommand('copy');
+      showMessage('Activity details copied to clipboard!', 'success');
+    } catch (err) {
+      showMessage('Failed to copy to clipboard', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+  }
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
