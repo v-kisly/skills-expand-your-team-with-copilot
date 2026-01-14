@@ -522,16 +522,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // Create share buttons
     const shareButtonsHtml = `
       <div class="share-buttons">
-        <button class="share-btn share-facebook" data-activity="${name}" title="Share on Facebook">
+        <button class="share-btn share-facebook" data-activity="${name}" title="Share on Facebook" aria-label="Share ${name} on Facebook">
           <span class="share-icon">📘</span>
         </button>
-        <button class="share-btn share-twitter" data-activity="${name}" title="Share on Twitter">
+        <button class="share-btn share-twitter" data-activity="${name}" title="Share on Twitter" aria-label="Share ${name} on Twitter">
           <span class="share-icon">🐦</span>
         </button>
-        <button class="share-btn share-email" data-activity="${name}" title="Share via Email">
+        <button class="share-btn share-email" data-activity="${name}" title="Share via Email" aria-label="Share ${name} via Email">
           <span class="share-icon">✉️</span>
         </button>
-        <button class="share-btn share-copy" data-activity="${name}" title="Copy Link">
+        <button class="share-btn share-copy" data-activity="${name}" title="Copy Link" aria-label="Copy ${name} details to clipboard">
           <span class="share-icon">🔗</span>
         </button>
       </div>
@@ -917,7 +917,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function shareOnTwitter(activityName, details) {
     const text = getActivityShareText(activityName, details);
     const url = getActivityShareUrl(activityName);
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    const shareUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showMessage('Opening Twitter share dialog...', 'info');
   }
@@ -959,6 +959,7 @@ document.addEventListener("DOMContentLoaded", () => {
     textArea.select();
     
     try {
+      // Using deprecated execCommand as fallback for older browsers
       document.execCommand('copy');
       showMessage('Activity details copied to clipboard!', 'success');
     } catch (err) {
